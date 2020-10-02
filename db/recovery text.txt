@@ -1,0 +1,14 @@
+CREATE TABLE "tbl_users" (
+	"id"	INTEGER,
+	"user"	TEXT,
+	"user_id"	TEXT UNIQUE,
+	"balance"	INTEGER DEFAULT 0,
+	"joined_date"	TEXT,
+	"last_active_date"	TEXT,
+	"roles"	TEXT,
+	"total_bet"	INTEGER DEFAULT 0,
+	"total_bet_month"	INTEGER DEFAULT 0,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+
+INSERT INTO tbl_users (user,user_id,joined_date,last_active_date,roles) values("Nlyn#9170","<@!257150485738422273>","Sun Sep 13 23:06:52 2020","Sun Sep 13 23:06:52 2020","Omega")

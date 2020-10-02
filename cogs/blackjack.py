@@ -51,7 +51,7 @@ class Blackjack(commands.Cog):
             #retrieve name using member obj
             name = current_member.name
             #start
-            self.db_conn.dbconn_open()
+            # self.db_conn.dbconn_open()
             userId = f'<@!{ctx.author.id}>'
 
 

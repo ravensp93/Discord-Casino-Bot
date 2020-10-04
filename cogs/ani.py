@@ -20,7 +20,17 @@ class Ani(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def ani(self,ctx):
-        print(self.deck)
+        channel = ctx.message.channel
+        await channel.send('Send me that 👍 reaction, mate')
+
+        def check(m):
+            return (str.lower(m.content) == 'hit' or  str.lower(m.content) == 'stand') and m.channel == channel and m.author == ctx.author
+        try:
+            await self.client.wait_for('reaction_add', timeout=60.0, check=check)
+        except asyncio.TimeoutError:
+            await channel.send('👎')
+        else:
+            await channel.send('👍')
 
 def setup(client):
     client.add_cog(Ani(client))

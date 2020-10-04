@@ -2,6 +2,7 @@ import discord
 import random
 from discord.ext import commands
 from cogs.db import dbconn
+from cogs.deckArt import deckArt
 import asyncio
 
 class Blackjack(commands.Cog):
@@ -37,143 +38,151 @@ class Blackjack(commands.Cog):
     #     embed.add_field(name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
     #     return embed 
 
-    @commands.cooldown(rate=1, per=1.5)
+    @commands.cooldown(rate=1, per=2)
     @commands.command(name="bj")
     @commands.guild_only()
     async def blackjack(self, ctx, amount:int):
-        if ctx.message.channel not in self.channel_lock:
+        if ctx.message.channel.name == "blackjack-2" or ctx.message.channel.name == "blackjack-1":
+            if ctx.message.channel not in self.channel_lock:
 
-            #INFO PACK
+                #INFO PACK
 
-            print("locked")
-            #start
-            # self.db_conn.dbconn_open()
-            userId = f'<@!{ctx.author.id}>'
+                print("locked")
+                #start
+                # self.db_conn.dbconn_open()
+                userId = f'<@!{ctx.author.id}>'
 
+                current_member = await ctx.guild.fetch_member(ctx.author.id)
+                print(current_member)
 
-            if amount < 1:
-                embed = discord.Embed(color=0xfffff1, description=f'**Minimum Bet is 1 {self.currency_name}!**')
-                embed.set_author(name=f'Blackjack',icon_url=ctx.guild.icon_url)
-                await ctx.send(embed=embed)
-                return
-
-            #Game code
-            #Reset
-            deck = ["DA","D2","D3","D4","D5","D6","D7","D8","D9","D10","DJ","DQ","DK"\
-                    ,"CA","C2","C3","C4","C5","C6","C7","C8","C9","C10","CJ","CQ","CK"\
-                    ,"HA","H2","H3","H4","H5","H6","H7","H8","H9","H10","HJ","HQ","HK"\
-                    ,"SA","S2","S3","S4","S5","S6","S7","S8","S9","S10","SJ","SQ","SK"
-                    ]
-
-            dealer_hand = []
-            player_hand = []
-            dealer_score = 0
-            player_score = 0
-            game_over = 0
-            game_start = True
-
-            embed = discord.Embed(color=0xffA1f1)
-            embed.set_author(name=f'Blackjack',icon_url=ctx.guild.icon_url)
-            embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Please type **hit** or **stand**',inline=False)
-
-
-            def deal_card(dealer, dealer_score, player_score):
-                card_val = 0
-                draw = random.randint(0, len(deck))
-                card = deck.pop(draw)
-                #assign card value
-                if card[1:] == "A":
-                    card_val = 1
-                    if dealer:
-                        if len(dealer_score) <= 10:
-                            card_val = 11
-                    else:
-                        if len(player_score) <= 10:
-                            card_val = 11
-                elif card[1:] == "J" or  card[1:] == "Q" or card[1:] == "K":
-                    card_val = 10
-                else:
-                    card_val = int(card[1:])
-                #assign hand and score
-                if dealer:
-                    dealer_hand.append(card)
-                    dealer_score = dealer_score + card_val
-                    return dealer_score
-                else:
-                    player_hand.append(card)
-                    player_score = player_score + card_val
-                    return player_score
-
-            dealer_score = deal_card(True, dealer_score, player_score)
-            player_score = deal_card(False, dealer_score, player_score)
-            dealer_score = deal_card(True, dealer_score, player_score)
-            player_score = deal_card(False, dealer_score, player_score)
-
-            while not game_over:
-                channel = ctx.message.channel
-                if game_start:
-                    embed.add_field(name=f'Player\'s Hand ({player_score})', value=player_hand,inline=False)
-                    embed.add_field(name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
-                    self.channel_lock.append(ctx.message.channel)
-                    game_msg = await channel.send(embed=embed)
-                    game_start = False
-                def check(m):
-                    return (str.lower(m.content) == 'hit' or  str.lower(m.content) == 'stand') and m.channel == channel and m.author == ctx.author
-
-                try:
-                    msg = await self.client.wait_for('message', timeout=20.0, check=check)
-                    
-                except asyncio.TimeoutError:
-                    await channel.send('Timeout...man')
-                    game_over = 1
-                else:
-                    if str.lower(msg.content) == "hit":
-                        player_score = deal_card(False, dealer_score, player_score)
-                        embed.set_field_at(1, name=f'Player\'s Hand ({player_score})', value=player_hand,inline=False)
-                        embed.set_field_at(2, name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
-                        await game_msg.edit(embed=embed)
-                        if player_score >= 21 :
-                            game_over = 1
-                    elif str.lower(msg.content) == "stand":
-                        print("stand")
-                        game_over = 1
-                if game_over:
-                    if player_score <= 21:
-                        while dealer_score < 17:
-                            dealer_score = deal_card(True, dealer_score, player_score)
-                # # if(self.db_conn.withdraw_bal(userId, amount)):
-                #     self.db_conn.update_lad_bet(userId, amount)
-                #     self.db_conn.deposit_bal(userId, int(amount * 1.9))
-                #     self.db_conn.dbconn_close()
-            if player_score <= 21:
-                if dealer_score <= 21:
-                    if player_score > dealer_score:
-                        embed = discord.Embed(color=0x32CD32)
-                        embed.set_author(name=f'Blackjack',icon_url=ctx.guild.icon_url)
-                        embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: {amount*2} {self.currency_name}',inline=False)
-                    elif dealer_score > player_score:
-                        embed = discord.Embed(color=0xFF0000)
-                        embed.set_author(name=f'Blackjack',icon_url=ctx.guild.icon_url)
-                        embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: 0 {self.currency_name}',inline=False)                    
-                    else:
-                        embed = discord.Embed(color=0xFFA500)
-                        embed.set_author(name=f'Blackjack',icon_url=ctx.guild.icon_url)
-                        embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: {amount} {self.currency_name}',inline=False)
-                else:
-                    embed = discord.Embed(color=0x32CD32)
+                if amount < 1:
+                    embed = discord.Embed(color=0xfffff1, description=f'**Minimum Bet is 1 {self.currency_name}!**')
                     embed.set_author(name=f'Blackjack',icon_url=ctx.guild.icon_url)
-                    embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: {amount*2} {self.currency_name}',inline=False)
+                    await ctx.send(embed=embed)
+                    return
+
+                #Game code
+                #Reset
+                deck = ["DA","D2","D3","D4","D5","D6","D7","D8","D9","D10","DJ","DQ","DK"\
+                        ,"CA","C2","C3","C4","C5","C6","C7","C8","C9","C10","CJ","CQ","CK"\
+                        ,"HA","H2","H3","H4","H5","H6","H7","H8","H9","H10","HJ","HQ","HK"\
+                        ,"SA","S2","S3","S4","S5","S6","S7","S8","S9","S10","SJ","SQ","SK"
+                        ]
+
+                dealer_hand = ''
+                player_hand = ''
+                dealer_score = 0
+                player_score = 0
+                game_over = 0
+                game_start = True
+
+                embed = discord.Embed(color=0xffA1f1)
+                embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
+                embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Please type **hit** or **stand**',inline=False)
+
+
+                def deal_card(dealer, dealer_score, player_score, player_hand, dealer_hand):
+                    card_val = 0
+                    draw = random.randint(0, len(deck))
+                    card = deck.pop(draw)
+                    #assign card value
+                    if card[1:] == "A":
+                        card_val = 1
+                        if dealer:
+                            if dealer_score <= 10:
+                                card_val = 11
+                        else:
+                            if player_score <= 10:
+                                card_val = 11
+                    elif card[1:] == "J" or  card[1:] == "Q" or card[1:] == "K":
+                        card_val = 10
+                    else:
+                        card_val = int(card[1:])
+                    #assign hand and score
+                    if dealer:
+                        card_url = deckArt.deck[card]
+                        dealer_hand = dealer_hand + card_url
+                        print(deckArt.deck[card])
+                        dealer_score = dealer_score + card_val
+                        return dealer_score,dealer_hand
+                    else:
+                        player_hand = player_hand + deckArt.deck[card]
+                        player_score = player_score + card_val
+                        return player_score,player_hand
+
+                dealer_score,dealer_hand = deal_card(True, dealer_score, player_score, player_hand, dealer_hand)
+                player_score,player_hand = deal_card(False, dealer_score, player_score, player_hand, dealer_hand)
+                dealer_score,dealer_hand = deal_card(True, dealer_score, player_score, player_hand, dealer_hand)
+                player_score,player_hand = deal_card(False, dealer_score, player_score, player_hand, dealer_hand)
+
+                while not game_over:
+                    channel = ctx.message.channel
+                    if game_start:
+                        embed.add_field(name=f'Player\'s Hand ({player_score})', value=player_hand,inline=False)
+                        embed.add_field(name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
+                        self.channel_lock.append(ctx.message.channel)
+                        game_msg = await channel.send(embed=embed)
+                        game_start = False
+                    def check(m):
+                        return (str.lower(m.content) == 'hit' or  str.lower(m.content) == 'stand') and m.channel == channel and m.author == ctx.author
+
+                    try:
+                        msg = await self.client.wait_for('message', timeout=20.0, check=check)
+                        
+                    except asyncio.TimeoutError:
+                        await channel.send('Timeout...man')
+                        game_over = 1
+                    else:
+                        if str.lower(msg.content) == "hit":
+                            player_score, player_hand = deal_card(False, dealer_score, player_score, player_hand, dealer_hand)
+                            embed.set_field_at(1, name=f'Player\'s Hand ({player_score})', value=player_hand,inline=False)
+                            embed.set_field_at(2, name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
+                            await game_msg.edit(embed=embed)
+                            if player_score >= 21 :
+                                game_over = 1
+                        elif str.lower(msg.content) == "stand":
+                            print("stand")
+                            game_over = 1
+                    if game_over:
+                        if player_score <= 21:
+                            while dealer_score < 17:
+                                dealer_score,dealer_hand = deal_card(True, dealer_score, player_score, player_hand, dealer_hand)
+                    # # if(self.db_conn.withdraw_bal(userId, amount)):
+                    #     self.db_conn.update_lad_bet(userId, amount)
+                    #     self.db_conn.deposit_bal(userId, int(amount * 1.9))
+                    #     self.db_conn.dbconn_close()
+                if player_score <= 21:
+                    if dealer_score <= 21:
+                        if player_score > dealer_score:
+                            embed = discord.Embed(color=0x32CD32)
+                            embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
+                            embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: {amount*2} {self.currency_name}',inline=False)
+                        elif dealer_score > player_score:
+                            embed = discord.Embed(color=0xFF0000)
+                            embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
+                            embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: 0 {self.currency_name}',inline=False)                    
+                        else:
+                            embed = discord.Embed(color=0xFFA500)
+                            embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
+                            embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: {amount} {self.currency_name}',inline=False)
+                    else:
+                        embed = discord.Embed(color=0x32CD32)
+                        embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
+                        embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: {amount*2} {self.currency_name}',inline=False)
+                else:
+                    embed = discord.Embed(color=0xFF0000)
+                    embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
+                    embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: 0 {self.currency_name}',inline=False)    
+                
+                embed.add_field(name=f'Player\'s Hand ({player_score})', value=player_hand,inline=False)
+                embed.add_field(name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
+                await game_msg.edit(embed=embed)
+                #end
+                self.channel_lock.remove(ctx.message.channel)
             else:
-                embed = discord.Embed(color=0xFF0000)
-                embed.set_author(name=f'Blackjack',icon_url=ctx.guild.icon_url)
-                embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: 0 {self.currency_name}',inline=False)    
-            embed.add_field(name=f'Player\'s Hand ({player_score})', value=player_hand,inline=False)
-            embed.add_field(name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
-            await game_msg.edit(embed=embed)
-            #end
-            self.channel_lock.remove(ctx.message.channel)
+                await ctx.send("The current **Blackjack** game is not over")
         else:
-            await ctx.send("The current **Blackjack** game is not over")
+            await ctx.send("Please head over to the blackjack channel!")
 
     #error handling for blackjack
     @blackjack.error

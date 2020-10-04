@@ -134,7 +134,7 @@ class Balance(commands.Cog):
                 self.embed.add_field(name="Rank", value=f'**VIP** <:omega:756090831768780860>', inline=False)
             elif stats_dict["roles"] == "VVIP":
                 self.create_embed(0x110d11, '' , f'{author_name}', current_member.avatar_url)
-                self.embed.add_field(name="Rank", value=f'**VVIP** <:VVIP:756102973586931794>', inline=False)
+                self.embed.add_field(name="Rank", value=f'**VVIP** <:VVIP:762310707445366815>', inline=False)
             else:
                 self.create_embed(0xfffff1, '' , f'{author_name}', current_member.avatar_url)
                 self.embed.add_field(name="Rank", value=f'UNRANKED ', inline=False)

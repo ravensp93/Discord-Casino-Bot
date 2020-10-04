@@ -2,6 +2,7 @@ import discord
 import random
 from discord.ext import commands
 from cogs.db import dbconn
+from cogs.deckArt import deckArt
 import asyncio
 
 class Ani(commands.Cog):
@@ -17,20 +18,11 @@ class Ani(commands.Cog):
                     ,"S1","S2","S3","S4","S5","S6","S7","S8","S9","S10","SJ","SQ","SK"
                     ]
 
+
     @commands.command()
     @commands.guild_only()
     async def ani(self,ctx):
-        channel = ctx.message.channel
-        await channel.send('Send me that 👍 reaction, mate')
-
-        def check(m):
-            return (str.lower(m.content) == 'hit' or  str.lower(m.content) == 'stand') and m.channel == channel and m.author == ctx.author
-        try:
-            await self.client.wait_for('reaction_add', timeout=60.0, check=check)
-        except asyncio.TimeoutError:
-            await channel.send('👎')
-        else:
-            await channel.send('👍')
+        print("test")
 
 def setup(client):
     client.add_cog(Ani(client))

@@ -19,10 +19,8 @@ class Toss(commands.Cog):
 
             #INFO PACK
             self.user_lock.append(ctx.author)
-            #retrieve guild object
-            guild = await self.client.fetch_guild(self.client.guilds[0].id)
             #retrieve member obj using guild obj
-            current_member = await guild.fetch_member(ctx.author.id)
+            current_member = await ctx.guild.fetch_member(ctx.author.id)
             #retrieve name using member obj
             name = current_member.name
             #check min amount

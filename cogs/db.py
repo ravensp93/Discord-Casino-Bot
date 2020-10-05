@@ -1,5 +1,6 @@
 import sqlite3
 import time
+import os
 
 class dbconn:
 
@@ -117,7 +118,7 @@ class dbconn:
 
     def dbconn_open(self):
         try:
-            self.sqliteConnection = sqlite3.connect('c:/Users/raven/OneDrive/Desktop/Discord/Code/db/bot.db')
+            self.sqliteConnection = sqlite3.connect(os.path.dirname(os.path.dirname(__file__))+"\\db\\bot.db")
             self.cursor = self.sqliteConnection.cursor()
             # print("Database created and Successfully Connected to SQLite")
         except sqlite3.Error as error:

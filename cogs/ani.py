@@ -3,6 +3,7 @@ import random
 from discord.ext import commands
 from cogs.db import dbconn
 from cogs.deckArt import deckArt
+from cogs.rwcsv import rwcsv
 import asyncio
 
 class Ani(commands.Cog):
@@ -22,7 +23,7 @@ class Ani(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def ani(self,ctx):
-        print("test")
+        rwcsv.write_to_csv("test")
 
 def setup(client):
     client.add_cog(Ani(client))

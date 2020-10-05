@@ -38,7 +38,7 @@ class Blackjack(commands.Cog):
     #     embed.add_field(name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
     #     return embed 
 
-    # @commands.cooldown(rate=1, per=2)
+    @commands.cooldown(rate=1, per=2)
     @commands.command(name="bj")
     @commands.guild_only()
     async def blackjack(self, ctx, amount:int, pp_amount = 0):
@@ -48,6 +48,7 @@ class Blackjack(commands.Cog):
                 #INFO PACK
                 #start
                 # self.db_conn.dbconn_open()
+                channel = ctx.message.channel
                 userId = f'<@!{ctx.author.id}>'
 
                 current_member = await ctx.guild.fetch_member(ctx.author.id)
@@ -67,14 +68,20 @@ class Blackjack(commands.Cog):
                         ,"SA","S2","S3","S4","S5","S6","S7","S8","S9","S10","SJ","SQ","SK"
                         ]*4
 
+                black_suit = ["C","S"]
+                red_suit = ["H","D"]
                 dealer_hand = ''
                 player_hand = ''
+                raw_player_hand = []
+                raw_dealer_hand = []
                 pp_hand = []
                 dealer_score = 0
                 player_score = 0
                 game_over = 0
                 game_start = True
                 pp_payout = 0
+                total_payout = 0
+                wager_payout = 0
                 pp_payout_type = "None"
                 blackjack = False
 
@@ -83,51 +90,69 @@ class Blackjack(commands.Cog):
                 embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}\n Please type **hit** or **stand**',inline=False)
 
 
+                def calc_score(dealer):
+                    total_score = 0
+                    if dealer:
+                        hand = raw_dealer_hand
+                    else:
+                        hand = raw_player_hand
+                    for x in range(2):
+                        for card in hand:
+                            if x == 0 and card[1:] == "A":
+                               continue
+                            elif x == 1 and card[1:] != "A":
+                               continue
+                            else:
+                                if card[1:] == "A":
+                                    if total_score <= 10:
+                                        total_score = total_score + 11
+                                    else:
+                                        total_score = total_score + 1
+                                elif card[1:] == "J" or  card[1:] == "Q" or card[1:] == "K":
+                                    total_score = total_score + 10
+                                else:
+                                    total_score = total_score + int(card[1:])
+                    #assign hand and score
+                    return total_score
+
                 def deal_card(dealer, dealer_score, player_score, player_hand, dealer_hand):
-                    card_val = 0
                     draw = random.randint(0, len(deck))
                     card = deck.pop(draw)
-                    #assign card value
-                    if card[1:] == "A":
-                        card_val = 1
-                        if dealer:
-                            if dealer_score <= 10:
-                                card_val = 11
-                        else:
-                            if player_score <= 10:
-                                card_val = 11
-                    elif card[1:] == "J" or  card[1:] == "Q" or card[1:] == "K":
-                        card_val = 10
-                    else:
-                        card_val = int(card[1:])
-                    #assign hand and score
+
                     if dealer:
+                        raw_dealer_hand.append(card)
                         if len(pp_hand) < 2:
                             pp_hand.append(card)
                         dealer_hand = dealer_hand + deckArt.deck[card]
-                        dealer_score = dealer_score + card_val
-                        return dealer_score,dealer_hand
+                        return calc_score(True),dealer_hand
                     else:
+                        raw_player_hand.append(card)
                         if len(pp_hand) < 2:
                             pp_hand.append(card)    
                         player_hand = player_hand + deckArt.deck[card]
-                        player_score = player_score + card_val
-                        return player_score,player_hand
+                        return calc_score(False),player_hand
 
                 dealer_score,dealer_hand = deal_card(True, dealer_score, player_score, player_hand, dealer_hand)
                 player_score,player_hand = deal_card(False, dealer_score, player_score, player_hand, dealer_hand)
                 player_score,player_hand = deal_card(False, dealer_score, player_score, player_hand, dealer_hand)
 
-                if pp_hand[0] == pp_hand[1]:
-                    pp_payout_type = "Perfect Pair"
-                    pp_payout = pp_amount * 25
+                if pp_hand[0][1:] == pp_hand[1][1:]:
+                    if pp_hand[0][:-1] == pp_hand[1][:-1]:
+                        pp_payout_type = "Perfect Pair"
+                        pp_payout = pp_amount * 25
+                    elif (pp_hand[0][:-1] in black_suit and pp_hand[1][:-1] in black_suit) or (pp_hand[0][:-1] in red_suit and pp_hand[1][:-1] in red_suit):
+                        pp_payout_type = "Colored Pair"
+                        pp_payout = pp_amount * 12
+                    else:
+                        pp_payout_type = "Mixed Pair"
+                        pp_payout = pp_amount * 6
 
 
                 if player_score == 21:
                     blackjack = True
 
+
                 while not game_over and blackjack == False:
-                    channel = ctx.message.channel
                     if game_start:
                         embed.add_field(name=f'Player\'s Hand ({player_score})', value=player_hand,inline=False)
                         embed.add_field(name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
@@ -164,29 +189,38 @@ class Blackjack(commands.Cog):
                 if player_score <= 21:
                     if dealer_score <= 21:
                         if player_score > dealer_score:
+                            total_payout = amount*2 + pp_payout
                             embed = discord.Embed(color=0x32CD32)
                             embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
-                            embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}({pp_payout_type})\n Payout: {amount*2} {self.currency_name}',inline=False)
+                            embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}**({pp_payout_type})**\n Payout: {total_payout} {self.currency_name}',inline=False)
                         elif dealer_score > player_score:
+                            total_payout = pp_payout
                             embed = discord.Embed(color=0xFF0000)
                             embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
-                            embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}({pp_payout_type})\n Payout: 0 {self.currency_name}',inline=False)                    
+                            embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}**({pp_payout_type})**\n Payout: {total_payout} {self.currency_name}',inline=False)                    
                         else:
+                            total_payout = amount + pp_payout
                             embed = discord.Embed(color=0xFFA500)
                             embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
-                            embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}({pp_payout_type})\n Payout: {amount} {self.currency_name}',inline=False)
+                            embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}**({pp_payout_type})**\n Payout: {total_payout} {self.currency_name}',inline=False)
                     else:
+                        total_payout = amount*2 + pp_payout
                         embed = discord.Embed(color=0x32CD32)
                         embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
-                        embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}({pp_payout_type})\n Payout: {amount*2} {self.currency_name}',inline=False)
+                        embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}**({pp_payout_type})**\n Payout: {total_payout} {self.currency_name}',inline=False)
                 else:
+                    total_payout = pp_payout
                     embed = discord.Embed(color=0xFF0000)
                     embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
-                    embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}({pp_payout_type})\n Payout: 0 {self.currency_name}',inline=False)    
+                    embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}**({pp_payout_type})**\n Payout: {total_payout} {self.currency_name}',inline=False)    
                 
                 embed.add_field(name=f'Player\'s Hand ({player_score})', value=player_hand,inline=False)
                 embed.add_field(name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
-                await game_msg.edit(embed=embed)
+                if blackjack:
+                    embed.set_field_at(1, name=f'Player\'s Hand <:sanc:762681431645487114>', value=player_hand,inline=False)
+                    await channel.send(embed=embed)
+                else:
+                    await game_msg.edit(embed=embed)
                 #end
                 self.channel_lock.remove(ctx.message.channel)
                 print(pp_hand)

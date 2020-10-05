@@ -22,8 +22,9 @@ class Ani(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def ani(self,ctx):
-        rwcsv.write_to_csv("test")
+    async def ani(self,ctx, member : discord.Member):
+        print(ctx.author)
+        print(f'{member.name}#{member.discriminator}')
 
 def setup(client):
     client.add_cog(Ani(client))

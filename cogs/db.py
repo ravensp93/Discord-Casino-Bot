@@ -1,6 +1,7 @@
 import sqlite3
 import time
 import os
+from cogs.rwcsv import rwcsv
 
 class dbconn:
 
@@ -62,12 +63,14 @@ class dbconn:
             return results
 
 
-    def update_bal(self, caller, userId, amount):
+    def update_bal(self, caller, userId, amount, currency_type="ZEN"):
         try:
             db_query = f'UPDATE {self.tablename} SET balance = {amount} WHERE user_id=\"{userId}\"'
             self.cursor.execute(db_query)
             self.sqliteConnection.commit()
             print(f'{caller} Updated {userId} balance to {amount} @@@@ {time.ctime()}')
+            rwcsv.write_to_csv(f'UBAL,{currency_type},{amount},')
+
         except sqlite3.Error as e:
             print(e)
 

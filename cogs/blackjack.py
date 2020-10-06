@@ -13,31 +13,6 @@ class Blackjack(commands.Cog):
         self.currency_name = "ZEN"
         self.channel_lock = []
 
-
-    # #View Module
-    # def create_embed(self, player_icon, name, amount, player_hand=None, dealer_hand=None, win=None, player_score=0, dealer_score=0, payout=0):
-
-    #     if win is None:
-    #         embed = discord.Embed(color=0xffA1f1)
-    #         embed.set_author(name=name,icon_url=player_icon)
-    #         embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Please type **hit** or **stand**',inline=False)
-    #     else:
-    #         if win == 1:
-    #             embed = discord.Embed(color=0x32CD32)
-    #             embed.set_author(name=name,icon_url=player_icon)
-    #             embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: {amount*2} {self.currency_name}',inline=False)
-    #         elif win == 2:
-    #             embed = discord.Embed(color=0xFF0000)
-    #             embed.set_author(name=name,icon_url=player_icon)
-    #             embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: 0 {self.currency_name}',inline=False)
-    #         elif win == 3:
-    #             embed = discord.Embed(color=0xFF0000)
-    #             embed.set_author(name=name,icon_url=player_icon)
-    #             embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\n Payout: {amount} {self.currency_name}',inline=False)
-    #     embed.add_field(name=f'Player\'s Hand ({player_score})', value=player_hand,inline=False)
-    #     embed.add_field(name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
-    #     return embed 
-
     @commands.cooldown(rate=1, per=2)
     @commands.command(name="bj")
     @commands.guild_only()
@@ -243,7 +218,7 @@ class Blackjack(commands.Cog):
     @blackjack.error
     async def blacjack_error(self,ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
-            embed = discord.Embed(color=0xfffff1, description='Enter the right command - .bj <amount>')
+            embed = discord.Embed(color=0xfffff1, description='Enter the right command - .bj <amount> <PP_amount>')
             embed.set_author(name=f'Blackjack',icon_url=ctx.guild.icon_url)
             # embed.set_footer(text='You have insufficient balance!')
             await ctx.send(embed=embed)

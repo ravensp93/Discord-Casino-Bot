@@ -45,6 +45,7 @@ client.load_extension('cogs.balance')
 client.load_extension('cogs.ani')
 client.load_extension('cogs.blackjack')
 client.load_extension('cogs.admin_u')
+client.load_extension('cogs.csp')
 
 # run the bot using token supplied.
 client.run('NzUxMTQ4ODEzMDc0NDMyMTMy.X1E32A.SDIKJYDlLJwk3OUJZdz2avkzn8U')

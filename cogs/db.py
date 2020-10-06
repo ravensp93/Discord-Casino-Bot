@@ -63,18 +63,18 @@ class dbconn:
             return results
 
 
-    def update_bal(self, caller, userId, amount, currency_type="ZEN"):
+    def update_bal(self, caller, username, userId, amount):
         try:
             db_query = f'UPDATE {self.tablename} SET balance = {amount} WHERE user_id=\"{userId}\"'
             self.cursor.execute(db_query)
             self.sqliteConnection.commit()
             print(f'{caller} Updated {userId} balance to {amount} @@@@ {time.ctime()}')
-            rwcsv.write_to_csv(f'UBAL,{currency_type},{amount},')
+            rwcsv.write_to_raw_log(f'UBAL,{caller},{username},{userId},{amount},-,{time.ctime()}')
 
         except sqlite3.Error as e:
             print(e)
 
-    def withdraw_bal(self, userId, amount):
+    def withdraw_bal(self, caller, username, userId, amount, activity='-'):
         #check user balance
         final_balance = self.get_current_balance(userId) - amount
         if(final_balance < 0):
@@ -85,17 +85,19 @@ class dbconn:
                 self.cursor.execute(db_query)
                 self.sqliteConnection.commit()
                 print(f'Withdrawn {amount} from {userId}\'s Account @@@@ {time.ctime()}')
+                rwcsv.write_to_raw_log(f'WITHDRAW,{caller},{username},{userId},{amount},{activity},{time.ctime()}')
             except sqlite3.Error as e:
                 print(e)
         return True
 
-    def deposit_bal(self, userId, amount):
+    def deposit_bal(self, caller, username, userId, amount, activity='-'):
         final_balance = self.get_current_balance(userId) + amount
         try:
             db_query = f'UPDATE {self.tablename} SET balance = {final_balance} WHERE user_id=\"{userId}\"'
             self.cursor.execute(db_query)
             self.sqliteConnection.commit()
             print(f'Deposited {amount} into {userId}\'s Account @@@@ {time.ctime()}')
+            rwcsv.write_to_raw_log(f'DEPOSIT,{caller},{username},{userId},{amount},{activity},{time.ctime()}')
         except sqlite3.Error as e:
             print(e)
 

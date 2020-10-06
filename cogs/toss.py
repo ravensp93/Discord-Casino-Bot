@@ -3,6 +3,7 @@ import random
 from discord.ext import commands
 from cogs.db import dbconn
 import asyncio
+from cogs.rwcsv import rwcsv
 
 class Toss(commands.Cog):
 
@@ -32,19 +33,21 @@ class Toss(commands.Cog):
 
             self.db_conn.dbconn_open()
             userId = f'<@!{ctx.author.id}>'
+            member_name = ctx.author
 
-            if(self.db_conn.withdraw_bal(userId, amount)):
+            if(self.db_conn.withdraw_bal('-',member_name,userId, amount, "TOSS")):
                 self.db_conn.update_lad_bet(userId, amount)
                 flip_result = self.coinflip()
                 name = current_member.name
                 #win
                 if flip_result == 1:
-                    self.db_conn.deposit_bal(userId, int(amount * 1.9))
+                    self.db_conn.deposit_bal('-',member_name,userId, int(amount * 1.9), "Toss")
                     embed = discord.Embed(color=0x32CD32)
                     embed.set_author(name=f'{name}',icon_url=current_member.avatar_url)
                     embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/754786420568096979/754811702368927764/icon.png')
                     embed.add_field(name="Coin Toss", value=f'Results: The coin lands on.... **Heads**!\nWager: **{amount} {self.currency_name}** - Payout {int(amount*1.9)} {self.currency_name}',inline=False)
                     await ctx.send(embed=embed)
+                    rwcsv.write_to_activity_log(f'{member_name},{amount},-,{userId},TOSS,HEADS,-,-,WIN,-{amount*0.9}')
                 #lose
                 else:
                     embed = discord.Embed(color=0xFF0000)
@@ -52,6 +55,7 @@ class Toss(commands.Cog):
                     embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/754786420568096979/754813613214007386/icon2.png')
                     embed.add_field(name="Coin Toss", value=f'Results: The coin lands on.... **Tails**!\nWager: **{amount} {self.currency_name}** - Payout 0 {self.currency_name}',inline=False)
                     await ctx.send(embed=embed)
+                    rwcsv.write_to_activity_log(f'{member_name},{amount},-,{userId},TOSS,TAILS,-,-,LOSE,{amount}')
             else:
                 embed = discord.Embed(color=0xfffff1, description='You have insufficient balance!')
                 embed.set_author(name=f'{name}',icon_url=current_member.avatar_url)

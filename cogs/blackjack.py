@@ -4,6 +4,7 @@ from discord.ext import commands
 from cogs.db import dbconn
 from cogs.deckArt import deckArt
 import asyncio
+from cogs.rwcsv import rwcsv
 
 class Blackjack(commands.Cog):
 
@@ -189,27 +190,32 @@ class Blackjack(commands.Cog):
                                 embed = discord.Embed(color=0x32CD32)
                                 embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
                                 embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}**({pp_payout_type})**\n Payout: {total_payout} {self.currency_name}',inline=False)
+                                rwcsv.write_to_activity_log(f'{ctx.author},{amount},{pp_amount},{userId},BLACKJACK,{player_score},{dealer_score},{pp_payout_type},WIN,{amount+pp_amount-total_payout}')
                             elif dealer_score > player_score:
                                 total_payout = pp_payout
                                 embed = discord.Embed(color=0xFF0000)
                                 embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
                                 embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}**({pp_payout_type})**\n Payout: {total_payout} {self.currency_name}',inline=False)                    
+                                rwcsv.write_to_activity_log(f'{ctx.author},{amount},{pp_amount},{userId},BLACKJACK,{player_score},{dealer_score},{pp_payout_type},LOSE,{amount+pp_amount-pp_payout}')
                             else:
                                 total_payout = amount + pp_payout
                                 embed = discord.Embed(color=0xFFA500)
                                 embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
                                 embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}**({pp_payout_type})**\n Payout: {total_payout} {self.currency_name}',inline=False)
+                                rwcsv.write_to_activity_log(f'{ctx.author},{amount},{pp_amount},{userId},BLACKJACK,{player_score},{dealer_score},{pp_payout_type},PUSH,{pp_amount - pp_payout}')
                         else:
                             total_payout = amount*2 + pp_payout
                             embed = discord.Embed(color=0x32CD32)
                             embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
                             embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}**({pp_payout_type})**\n Payout: {total_payout} {self.currency_name}',inline=False)
+                            rwcsv.write_to_activity_log(f'{ctx.author},{amount},{pp_amount},{userId},BLACKJACK,{player_score},{dealer_score},{pp_payout_type},WIN,{amount+pp_amount-total_payout}')
                     else:
                         total_payout = pp_payout
                         embed = discord.Embed(color=0xFF0000)
                         embed.set_author(name=f'{current_member.name}',icon_url=current_member.avatar_url)
                         embed.add_field(name="Blackjack", value=f'Wager: {amount} {self.currency_name}\nPerfect Pair: {pp_amount} {self.currency_name}**({pp_payout_type})**\n Payout: {total_payout} {self.currency_name}',inline=False)    
-                    
+                        rwcsv.write_to_activity_log(f'{ctx.author},{amount},{pp_amount},{userId},BLACKJACK,{player_score},{dealer_score},{pp_payout_type},LOSE,{amount+pp_amount-pp_payout}')
+
                     embed.add_field(name=f'Player\'s Hand ({player_score})', value=player_hand,inline=False)
                     embed.add_field(name=f'Dealers\'s Hand ({dealer_score})', value=dealer_hand,inline=False)
                     if blackjack:
@@ -218,9 +224,9 @@ class Blackjack(commands.Cog):
                     else:
                         await game_msg.edit(embed=embed)
                     #end
-                    db_conn.withdraw_bal(userId, amount+pp_amount)
+                    db_conn.withdraw_bal('-', ctx.author,userId, amount+pp_amount, "BLACKJACK")
                     if(total_payout != 0):
-                        db_conn.deposit_bal(userId, total_payout)
+                        db_conn.deposit_bal('-', ctx.author, userId, total_payout, "BLACKJACK")
                     db_conn.update_lad_bet(userId, amount+pp_amount)
                     self.channel_lock.remove(ctx.message.channel)
                 else:

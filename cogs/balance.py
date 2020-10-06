@@ -25,6 +25,8 @@ class Balance(commands.Cog):
     async def trans(self, ctx, member, amount : int):
         author_name = "Transfer Request"
         src_userId = f'<@!{ctx.author.id}>'
+        tar_member = ctx.guild.get_member(int(member[3:-1]))
+        tar_name = f'{tar_member.name}#{tar_member.discriminator}'
         if '!' not in member:
             member = member[:2] + '!' + member[2:]
         if(src_userId == member):
@@ -35,8 +37,8 @@ class Balance(commands.Cog):
         self.db_conn.dbconn_open()
 
         if(amount > 0):
-            if(self.db_conn.withdraw_bal(src_userId, amount)):
-                self.db_conn.deposit_bal(member, amount)
+            if(self.db_conn.withdraw_bal("-", ctx.author, src_userId, amount, "TRANSFER")):
+                self.db_conn.deposit_bal("-", tar_name, member, amount, "TRANSFER")
                 txt = f'{src_userId} tranferred **{amount} {self.currency_name}** to {member}\'s wallet.'
                 self.create_embed(0xfffff1, txt, author_name, ctx.guild.icon_url)
                 await ctx.send(embed=self.embed)
@@ -54,7 +56,7 @@ class Balance(commands.Cog):
     @trans.error
     async def trans_error(self,ctx, error):
         author_name = "Transfer Request"
-        src_userId = f'<@!{ctx.author.id}>'
+        userId = f'<@!{ctx.author.id}>'
         if isinstance(error, commands.MissingRequiredArgument):
             self.create_embed(0xfffff1, 'Enter the right command .trans <@user> <amount>' , author_name, ctx.guild.icon_url)
             await ctx.send(embed=self.embed)

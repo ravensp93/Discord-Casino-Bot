@@ -33,8 +33,10 @@ class admin_u(commands.Cog):
         author_name = "Admin Command <Update Balance>"
         if '!' not in member:
             member = member[:2] + '!' + member[2:]
+        member_obj = (ctx.guild.get_member(int(member[3:-1])))
+        username = f'{member_obj.name}#{member_obj.discriminator}'
         self.db_conn.dbconn_open()
-        self.db_conn.update_bal(f'{ctx.author}', member, amount)
+        self.db_conn.update_bal(f'{ctx.author}', username, member, amount)
         self.db_conn.dbconn_close()
         self.create_embed(0xff8080, f'**Updated Balance for {member}**', author_name, ctx.guild.icon_url)
         await ctx.send(embed=self.embed)

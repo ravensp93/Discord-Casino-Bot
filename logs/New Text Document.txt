@@ -1,1 +1,1 @@
-Action,Currency,Amount,Game,Username,UserId,Date
+Action,From,Username,UserId,Amount,Game,Date

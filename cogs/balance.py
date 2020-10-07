@@ -30,7 +30,7 @@ class Balance(commands.Cog):
             self.create_embed(0xfffff1, "You can\'t transfer to yourself!", author_name, ctx.guild.icon_url)
             await ctx.send(embed=self.embed)
             return
-
+        print(self.client.get_guild(751089063250886847).members)
         self.db_conn.dbconn_open()
         if(amount > 0):
             if(self.db_conn.withdraw_bal("-", ctx.author, src_userId, amount, "TRANSFER")):

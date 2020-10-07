@@ -80,7 +80,6 @@ class admin_u(commands.Cog):
             if '!' not in member:
                 member = member[:2] + '!' + member[2:]
             member = await ctx.guild.fetch_member(int(member[3:-1]))
-
         author_name = "Admin Command <Update Role>"
         for m_role in member.roles[1:]:
             await member.remove_roles(m_role)

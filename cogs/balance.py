@@ -22,23 +22,19 @@ class Balance(commands.Cog):
     #transfer command
     @commands.command()
     @commands.guild_only()
-    async def trans(self, ctx, member, amount : int):
+    async def trans(self, ctx, member : discord.Member, amount : int):
         author_name = "Transfer Request"
         src_userId = f'<@!{ctx.author.id}>'
-        tar_member = ctx.guild.get_member(int(member[3:-1]))
-        tar_name = f'{tar_member.name}#{tar_member.discriminator}'
-        if '!' not in member:
-            member = member[:2] + '!' + member[2:]
+        tar_name = f'{member.name}#{member.discriminator}'
         if(src_userId == member):
             self.create_embed(0xfffff1, "You can\'t transfer to yourself!", author_name, ctx.guild.icon_url)
             await ctx.send(embed=self.embed)
             return
 
         self.db_conn.dbconn_open()
-
         if(amount > 0):
             if(self.db_conn.withdraw_bal("-", ctx.author, src_userId, amount, "TRANSFER")):
-                self.db_conn.deposit_bal("-", tar_name, member, amount, "TRANSFER")
+                self.db_conn.deposit_bal("-", tar_name, f'<@!{member.id}>', amount, "TRANSFER")
                 txt = f'{src_userId} tranferred **{amount} {self.currency_name}** to {member}\'s wallet.'
                 self.create_embed(0xfffff1, txt, author_name, ctx.guild.icon_url)
                 await ctx.send(embed=self.embed)

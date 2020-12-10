@@ -1,4 +1,4 @@
-A Casino Bot Project
+A Casino Discord Bot Proof-Of-Concept
 
 Utility
 - Account Balance
